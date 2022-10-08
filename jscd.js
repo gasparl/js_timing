@@ -1,10 +1,8 @@
 /*jshint esversion: 6 */
-
 /**
  * JavaScript Client Detection
  * (C) viazenetti GmbH (Christian Ludwig)
  */
-
 (function (window) {
     {
         var unknown = '-';
@@ -98,6 +96,14 @@
         // mobile version
         var mobile = /Mobile|mini|Fennec|Android|iP(ad|od|hone)/.test(nVer);
 
+        // cookie
+        var cookieEnabled = (navigator.cookieEnabled) ? true : false;
+
+        if (typeof navigator.cookieEnabled == 'undefined' && !cookieEnabled) {
+            document.cookie = 'testcookie';
+            cookieEnabled = (document.cookie.indexOf('testcookie') != -1) ? true : false;
+        }
+
         // system
         var os = unknown;
         var clientStrings = [
@@ -157,6 +163,18 @@
                 break;
         }
 
+        // flash (you'll need to include swfobject)
+        /* script src="//ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js" */
+        var flashVersion = 'no check';
+        if (typeof swfobject != 'undefined') {
+            var fv = swfobject.getFlashPlayerVersion();
+            if (fv.major > 0) {
+                flashVersion = fv.major + '.' + fv.minor + ' r' + fv.release;
+            }
+            else  {
+                flashVersion = unknown;
+            }
+        }
     }
 
     window.jscd = {
@@ -166,6 +184,18 @@
         browserMajorVersion: majorVersion,
         mobile: mobile,
         os: os,
-        osVersion: osVersion
+        osVersion: osVersion,
+        cookies: cookieEnabled,
+        flashVersion: flashVersion
     };
 }(this));
+
+
+// 'OS: ' + jscd.os +' '+ jscd.osVersion + '\n' +
+// 'Browser: ' + jscd.browser +' '+ jscd.browserMajorVersion +
+//   ' (' + jscd.browserVersion + ')\n' +
+// 'Mobile: ' + jscd.mobile + '\n' +
+// 'Flash: ' + jscd.flashVersion + '\n' +
+// 'Cookies: ' + jscd.cookies + '\n' +
+// 'Screen Size: ' + jscd.screen + '\n\n' +
+// 'Full User Agent: ' + navigator.userAgent

@@ -24,42 +24,6 @@ const DT = {
         })();
         return performance.now();
     },
-    // the complex mechanism below is from https://stackoverflow.com/a/57549862/9593181
-    // (see the same link for explanation)
-    // it turns out that it does not really make a difference, see e.g. https://osf.io/7h5tw/
-    rPAF: (function() {
-        if (typeof requestPostAnimationFrame === 'function') {
-            return (requestPostAnimationFrame);
-        } else {
-            const channel = new MessageChannel();
-            const callbacks = [];
-            let timestamp = 0;
-            let called = false;
-            channel.port2.onmessage = e => {
-                called = false;
-                const toCall = callbacks.slice();
-                callbacks.length = 0;
-                toCall.forEach(fn => {
-                    try {
-                        fn(timestamp);
-                    } catch (e) { }
-                });
-            };
-            return (function(callback) {
-                if (typeof callback !== 'function') {
-                    throw new TypeError('Argument 1 is not callable');
-                }
-                callbacks.push(callback);
-                if (!called) {
-                    requestAnimationFrame((time) => {
-                        timestamp = time;
-                        channel.port1.postMessage('');
-                    });
-                    called = true;
-                }
-            });
-        }
-    })(),
     // loop decides whether the RAF loop should continue, see below
     loop: false,
     // loopFunction actually defined below, because of self-reference
@@ -81,9 +45,7 @@ const DT = {
         }
         this.loop = false;
     },
-    // this images dictionary is to contain all preloaded image objects
     images: {},
-    // function to preload a list of images (via their given paths)
     preload: sources =>
         Promise.all(
             sources.map(
@@ -96,29 +58,44 @@ const DT = {
                     img.onerror = reject;
                     img.src = src;
                 }))),
-    // canvas on which one can draw
-    canvas: {},
-    // the canvas context objects needed for drawings
-    contex: {},
-    // add given canvas (via its ID) to the (webpage) document
-    addCanvas: (id) => {
-        DT.canvas[id] = document.getElementById(id);
-        DT.contex[id] = DT.canvas[id].getContext('2d');
+    // RAF timestamp samples
+    samples: [],
+    // refresh interval(s) based on RAF timestamp samples
+    interval: undefined,
+    // collect RAF timestamp samples, 10 by prevent
+    // (also calculates approx. refresh interval, based on median RAF stamp distance)
+    getSamples: function(fun = undefined, n = 10) {
+        requestAnimationFrame((stamp) => {
+            this.samples.push(stamp);
+            if (n > 1) {
+                this.getSamples(fun, --n);
+            } else {
+                const samps = this.samples.slice(0);
+                if (samps.length > 1 && this.interval === undefined) {
+                    samps.shift();
+                    this.interval = parseFloat(this.median(samps.slice(1).map((num, i) => {
+                        return num - samps[i];
+                    }))).toFixed(1);
+                }
+                if (typeof fun === 'function') {
+                    fun();
+                }
+            }
+        });
     },
-    // clear the given canvas (via its ID)
-    clearCanvas: (id) => {
-        ctx.clearRect(0, 0, DT.canvas[id].width, DT.canvas[id].height);
-    },
-    // draw on the given canvas (via its ID) with original width and height
-    drawCanvas: (id, src) => {
-        let image = DT.images[src];
-        DT.canvas[id].width = image.naturalWidth;
-        DT.canvas[id].height = image.naturalHeight;
-        DT.contex[id].drawImage(image, 0, 0);
-    },
-    // draw on the given canvas (via its ID) without changing canvas size
-    drawCanvasDef: (id, src) => {
-        DT.contex[id].drawImage(image[src], 0, 0);
+    // median calculation
+    median: function(values) {
+        if (values.length === 0) {
+            return undefined;
+        }
+        values.sort(function(a, b) {
+            return a - b;
+        });
+        const half = Math.floor(values.length / 2);
+        if (values.length % 2) {
+            return values[half];
+        }
+        return (values[half - 1] + values[half]) / 2.0;
     }
 };
 
@@ -128,3 +105,5 @@ DT.loopFunction = function() {
         requestAnimationFrame(DT.loopFunction);
     }
 };
+
+Object.seal(DT);
