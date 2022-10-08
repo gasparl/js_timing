@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link href="data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQEAYAAABPYyMiAAAABmJLR0T///////8JWPfcAAAACXBIWXMAAABIAAAASABGyWs+AAAAF0lEQVRIx2NgGAWjYBSMglEwCkbBSAcACBAAAeaR9cIAAAAASUVORK5CYII=" rel="icon" type="image/x-icon" />
+    <title>JS Display Time Measure</title>
+    <meta charset="utf-8">
+    <meta name="author" content="Gaspar Lukacs">
+    <script src="./disptime.js"></script>
+    <script src="./jscd.js"></script>
+    <script src="./main.js"></script>
+    <style>
+        .centered {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #stimulus_id {
+            font-size: 400px;
+        }
+
+        #bg_id {
+            background-color: red;
+            height: 500px;
+            width: 500px;
+            border: double 10px green;
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="bg_id">
+        <canvas id="canvas_id" width="400" height="400" class="centered"></canvas>
+        <div id="stimulus_id" class="centered"></div>
+    </div>
+
+    <div>
+        <div id="btns_id">
+            <button type="button" onclick="begin('white', false);"> plain / white background </button>
+            <button type="button" onclick="begin('black', false);"> plain / black background </button> |
+            <button type="button" onclick="begin('white', true);"> images / white background </button>
+            <button type="button" onclick="begin('black', true);"> images / black background </button>
+        </div>
+        <div id="jscd_id">...</div>
+        <br>
+        <div id="info_id">[...]</div>
+        <br>
+        <br>
+        <button id="dl_id" style="display:none;font-weight:bold;" type="button" onclick="dl_as_file();">download</button>
+    </div>
+
+</body>
+
+</html>
