@@ -42,7 +42,7 @@ const DT = {
                 toCall.forEach(fn => {
                     try {
                         fn(timestamp);
-                    } catch (e) {}
+                    } catch (e) { }
                 });
             };
             return (function(callback) {
