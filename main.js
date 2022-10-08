@@ -350,42 +350,6 @@ function disp_rPAF1_text() {
     });
 }
 
-
-function disp_rPAF2_text() {
-    requestAnimationFrame(function() {
-        console.log('disp_rPAF2_text', neat_date());
-        if (current_stim.type == 'text') {
-            document.getElementById('stimulus_id').textContent = current_stim.item;
-        } else {
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-        js_times.start_nextline = DT.now();
-        DT.rPAF(function(stamp) {
-            js_times.start_other = DT.now();
-            js_times.start_stamp = stamp;
-
-            setTimeout(function() {
-
-                requestAnimationFrame(function() {
-                    if (current_stim.type == 'text') {
-                        document.getElementById('stimulus_id').textContent = '';
-                    } else {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    }
-                    js_times.end_nextline = DT.now();
-                    DT.rPAF(function(stamp2) {
-                        js_times.end_other = DT.now();
-                        js_times.end_stamp = stamp2;
-                        store_trial();
-                    });
-                });
-
-            }, current_stim.duration - d_buff);
-
-        });
-    });
-}
-
 function disp_rAF1_text() {
     console.log('disp_rAF1_text', neat_date());
     js_times.start_other = DT.now();
