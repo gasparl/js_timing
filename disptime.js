@@ -45,7 +45,9 @@ const DT = {
         }
         this.loop = false;
     },
+    // loaded images
     images: {},
+    // preload images
     preload: sources =>
         Promise.all(
             sources.map(

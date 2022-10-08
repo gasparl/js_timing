@@ -1,23 +1,23 @@
 /*jshint esversion: 6 */
 
 // define global variables
-let use_images, date_time, jscd_text, listenkey, text_to_show, js_times,
+let use_images, date_time, listenkey, text_to_show, js_times,
     bg_color, stim_color, input_time, disp_func, canvas, ctx;
-let trialnum = 0;
-let startclicked = false;
-let allimages = [];
-let d_buff = 8; // advance time with which to adjust the setTimeout function
-// (for the 60 Hz refresh rate; 16.7 ms per frame; 8 ms advance initation of display)
+let trialnum = 0,
+    startclicked = false,
+    allimages = [],
+    misc = {}; // advance time with which at which to stop display
 
 document.addEventListener("DOMContentLoaded", function() {
     // define a small information box for continually updated info about the ongoing trials
     let heads = ["os", "os_v", "browser", "browser_v", "screen"];
     let cols = [jscd.os, jscd.osVersion, jscd.browser, jscd.browserVersion, jscd.screen];
     let jscd_show = heads.map(function(hed, ind) {
+        misc[hed] = cols[ind];
         return ('<br>' + hed + ': <b>' + cols[ind] + '</b>');
     });
+
     date_time = neat_date();
-    jscd_text = 'client\t' + heads.join('/') + '/study/bg/xstart\t' + cols.join('/');
     document.getElementById('jscd_id').innerHTML = jscd_show;
 
     // define the canvas on which to draw the main stimuli
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", function() {
             listenkey = false;
             disp_func(); // here the stimulus is displayed
         } else if (startclicked && e.key == 'x') {
-            jscd_text += input_time;
+            misc.xstart = input_time;
             next_trial(); // initiates trial cycles
             startclicked = false;
         }
@@ -51,9 +51,9 @@ function begin(colr, imguse) {
     bg_color = colr;
     use_images = imguse;
     if (use_images) {
-        jscd_text += '/image/';
+        misc.study = '/image/';
     } else {
-        jscd_text += '/plain/';
+        misc.study = '/plain/';
     }
     // (stimulus color always opposite of background color)
     if (bg_color == 'black') {
@@ -61,10 +61,10 @@ function begin(colr, imguse) {
         document.getElementById('stimulus_id').style.color = "white";
         ctx.fillStyle = "white"; // canvas stimulus color
         document.getElementById('bg_id').style.backgroundColor = "black";
-        jscd_text += 'black/';
+        misc.bg = 'black/';
     } else {
         stim_color = 'black';
-        jscd_text += 'white/';
+        misc.bg = 'white/';
         document.getElementById('bg_id').style.backgroundColor = "white";
     }
     document.getElementById('btns_id').style.visibility = 'hidden';
@@ -75,17 +75,17 @@ function begin(colr, imguse) {
 // create a list of dictionaries
 // where each dictionary contains the information of a single trial
 function stim_gen() {
-    let times = 10; // how many repetitions per condition
-    let durs = [16, 50, 150, 300, 500]; // variations of stimulus display duration
+    const times = 10; // how many repetitions per condition
+    const durs = [16, 50, 150, 300, 500]; // variations of stimulus display duration
+    const buffs = [0, 2.5, 5]; // variations of buffer time
     let methods;
     if (use_images === true) {
         methods = [
             'canvas', 'opacity', 'none'
         ];
     } else {
-        // the timing method names correspond to the ones described in https://osf.io/7h5tw/
         methods = [
-            'rPAF_1rAF', 'rPAF_alone', 'rPAF_loop', 'rAFpre', 'rAFpre_double',
+            'rPAF_1rAF', 'rAFpre', 'rAFpre_double',
             'rAFpre_loop', 'rAF_single', 'rAF_double', 'rAF_loop', 'none'
         ];
     }
@@ -130,14 +130,17 @@ function stim_gen() {
     allstims = [];
     methods.forEach((tmr) => {
         durs.forEach((dur) => {
-            Object.keys(types).forEach((typ) => {
-                let stims = shuffle(types[typ]).slice(0, times);
-                stims.forEach((itm) => {
-                    allstims.push({
-                        'item': itm,
-                        'duration': dur,
-                        'type': typ,
-                        'method': tmr
+            buffs.forEach((buf) => {
+                Object.keys(types).forEach((typ) => {
+                    let stims = shuffle(types[typ]).slice(0, times);
+                    stims.forEach((itm) => {
+                        allstims.push({
+                            'item': itm,
+                            'duration': dur,
+                            'buff': buf,
+                            'type': typ,
+                            'method': tmr
+                        });
                     });
                 });
             });
@@ -312,7 +315,7 @@ function disp_image() {
                 store_trial();
             });
 
-        }, current_stim.duration - d_buff);
+        }, current_stim.duration - current_stim.buff);
 
     });
 }
@@ -347,7 +350,7 @@ function disp_rAF1_text() {
                 store_trial();
             });
 
-        }, current_stim.duration - d_buff);
+        }, current_stim.duration - current_stim.buff);
 
     });
 }
@@ -380,7 +383,7 @@ function disp_rAF2_text() {
                     });
                 });
 
-            }, current_stim.duration - d_buff);
+            }, current_stim.duration - current_stim.buff);
 
         });
     });
@@ -414,7 +417,7 @@ function disp_rAF1pre_text() {
                 store_trial();
             });
 
-        }, current_stim.duration - d_buff);
+        }, current_stim.duration - current_stim.buff);
 
     });
 }
@@ -447,7 +450,7 @@ function disp_rAF2pre_text() {
                     });
                 });
 
-            }, current_stim.duration - d_buff);
+            }, current_stim.duration - current_stim.buff);
 
         });
     });
@@ -477,7 +480,7 @@ function disp_none_text() {
             js_times.end_stamp = js_times.end_nextline;
             js_times.end_other = js_times.end_nextline;
             store_trial();
-        }, current_stim.duration - d_buff);
+        }, current_stim.duration - current_stim.buff);
     });
 }
 
@@ -530,7 +533,7 @@ function store_trial() {
 // change rectangle color to blue to indicate experiment ending
 function ending() {
     console.log('THE END');
-    full_data += jscd_text;
+    full_data += JSON.stringify(misc);
     document.getElementById('dl_id').style.display = 'block';
     setTimeout(function() {
         document.getElementById('bg_id').style.backgroundColor = "blue";
