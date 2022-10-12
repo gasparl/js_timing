@@ -45,6 +45,17 @@ const DT = {
         }
         this.loop = false;
     },
+    // initiate RTOloop ("setRTO" via RAF loop)
+    // actually defined below, because of self-reference
+    setRTO: undefined,
+    // RTOloop actually defined below, because of self-reference
+    RTOloop: undefined,
+    // start time for setRTOLoop 
+    RTOstart: undefined,
+    // duration for setRTOLoop 
+    RTOduration: undefined,
+    // callback function for setRTOLoop 
+    RTOcallback: undefined,
     // loaded images
     images: {},
     // preload images
@@ -105,6 +116,26 @@ const DT = {
 DT.loopFunction = function() {
     if (DT.loop) {
         requestAnimationFrame(DT.loopFunction);
+    }
+};
+
+// add the RAF Time-Out (RTO) initiation function definition
+DT.setRTO = function(callback, duration, start = DT.now()) {
+    DT.RTOstart = start;
+    DT.RTOduration = duration;
+    DT.RTOcallback = callback;
+    DT.RTOloop(start);
+};
+
+// add the RAF setRTO function definition
+DT.RTOloop = function(timestamp) {
+    if (timestamp - DT.RTOstart < DT.RTOduration) {
+        requestAnimationFrame((RAFtimestamp) => DT.RTOloop(RAFtimestamp));
+    } else {
+        DT.RTOcallback(timestamp, DT.RTOstart);
+        DT.RTOcallback = undefined;
+        DT.RTOstart = undefined;
+        DT.RTOduration = undefined;
     }
 };
 

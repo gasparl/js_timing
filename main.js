@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 // condition selection based on the clicked button (see index.html)
 // (background: white or black; stimuli: plain text/canvas [study 1] or images [study 2])
-function begin(colr, imguse) {
+const begin = function(colr, imguse) {
     bg_color = colr;
     use_images = imguse;
     if (use_images) {
@@ -70,7 +70,7 @@ function begin(colr, imguse) {
     document.getElementById('btns_id').style.visibility = 'hidden';
     stim_gen();
     startclicked = true;
-}
+};
 
 // create a list of dictionaries
 // where each dictionary contains the information of a single trial
@@ -242,22 +242,6 @@ function set_disp_conds() {
     } else if (current_stim.method == 'rAF_loop') { // same as rAF_single but with loop
         disp_func = disp_rAF1_text;
         DT.loopOn();
-    } else if (current_stim.method == 'rAFpre') {
-        disp_func = disp_rAF1pre_text;
-    } else if (current_stim.method == 'rAFpre_double') {
-        disp_func = disp_rAF2pre_text;
-    } else if (current_stim.method == 'rAFpre_loop') { // same as rAFpre but with loop
-        disp_func = disp_rAF1pre_text;
-        DT.loopOn();
-    } else if (current_stim.method == 'rPAF_alone') {
-        disp_func = disp_rPAF1_text;
-    } else if (current_stim.method == 'rPAF_1rAF') {
-        disp_func = disp_rPAF2_text;
-    } else if (current_stim.method == 'rPAF_loop') { // same as rPAF_alone but with loop
-        disp_func = disp_rPAF1_text;
-        DT.loopOn();
-    } else if (current_stim.method == 'none') {
-        disp_func = disp_none_text;
     } else {
         // (just for extra safety; it was useful for pilot testing)
         console.error('No display function found');
@@ -281,6 +265,75 @@ Hence the display command (typically given within a RAF) comes immediately after
 The main measurement is the time between the keypress JS timing and the display start JS timing.
 (Which is compared to the corresponding measurement obtained by the external timer.)
 */
+
+
+// plain text/canvas display and timing methods
+// (see the corresponding method names in the set_disp_conds() function)
+
+
+const trial_end = function(end_stamp0) {
+    js_times.end_0_now = DT.now();
+    js_times.end_0 = end_stamp0;
+    requestAnimationFrame(function(end_stamp1) {
+        js_times.end_1_now = DT.now();
+        js_times.end_1 = end_stamp1;
+        if (current_stim.type == 'text') {
+            document.getElementById('stimulus_id').textContent = '';
+        } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        requestAnimationFrame(function(end_stamp2) {
+            js_times.end_2_now = DT.now();
+            js_times.end_2 = end_stamp2;
+            store_trial();
+        });
+    });
+};
+
+const stopwatch = function() {
+    if (current_stim.stopwatch === 'raf') {
+
+    } else {
+        setTimeout(() => {
+            trial_end();
+        }, current_stim.duration - current_stim.buff);
+    }
+};
+
+function disp_rAF1_text() {
+    console.log('disp_rAF1_text', neat_date());
+    js_times.start_other = DT.now();
+
+    requestAnimationFrame(function(stamp) {
+        if (current_stim.type == 'text') {
+            document.getElementById('stimulus_id').textContent = current_stim.item;
+        } else {
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        js_times.start_nextline = DT.now();
+        js_times.start_stamp = stamp; // the crucial (start) JS-timing
+        stopwatch();
+    });
+}
+
+
+function disp_rAF2_text() {
+    console.log('disp_rAF2_text', neat_date());
+    requestAnimationFrame(function() {
+        if (current_stim.type == 'text') {
+            document.getElementById('stimulus_id').textContent = current_stim.item;
+        } else {
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        js_times.start_nextline = DT.now();
+        requestAnimationFrame(function(stamp) {
+            js_times.start_other = DT.now();
+            js_times.start_stamp = stamp;
+            stopwatch();
+        });
+    });
+}
+
 
 // image display and timing method
 
@@ -319,76 +372,6 @@ function disp_image() {
 
     });
 }
-
-// plain text/canvas display and timing methods
-// (see the corresponding method names in the set_disp_conds() function)
-
-function disp_rAF1_text() {
-    console.log('disp_rAF1_text', neat_date());
-    js_times.start_other = DT.now();
-
-    requestAnimationFrame(function(stamp) {
-        if (current_stim.type == 'text') {
-            document.getElementById('stimulus_id').textContent = current_stim.item;
-        } else {
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-        js_times.start_nextline = DT.now();
-        js_times.start_stamp = stamp; // the crucial (start) JS-timing
-
-        setTimeout(function() {
-            js_times.end_other = DT.now();
-
-            requestAnimationFrame(function(stamp2) {
-                if (current_stim.type == 'text') {
-                    document.getElementById('stimulus_id').textContent = '';
-                } else {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                }
-                js_times.end_nextline = DT.now();
-                js_times.end_stamp = stamp2; // the crucial (end) JS-timing
-                store_trial();
-            });
-
-        }, current_stim.duration - current_stim.buff);
-
-    });
-}
-
-function disp_rAF2_text() {
-    console.log('disp_rAF2_text', neat_date());
-    requestAnimationFrame(function() {
-        if (current_stim.type == 'text') {
-            document.getElementById('stimulus_id').textContent = current_stim.item;
-        } else {
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-        js_times.start_nextline = DT.now();
-        requestAnimationFrame(function(stamp) {
-            js_times.start_other = DT.now();
-            js_times.start_stamp = stamp;
-
-            setTimeout(function() {
-                requestAnimationFrame(function() {
-                    js_times.end_other = DT.now();
-                    if (current_stim.type == 'text') {
-                        document.getElementById('stimulus_id').textContent = '';
-                    } else {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    }
-                    requestAnimationFrame(function(stamp2) {
-                        js_times.end_nextline = DT.now();
-                        js_times.end_stamp = stamp2;
-                        store_trial();
-                    });
-                });
-
-            }, current_stim.duration - current_stim.buff);
-
-        });
-    });
-}
-
 
 //*** storing data, etc. ***//
 
