@@ -74,7 +74,7 @@ const begin = function(colr, imguse) {
 
 // create a list of dictionaries
 // where each dictionary contains the information of a single trial
-function stim_gen() {
+const stim_gen = function() {
     const times = 10; // how many repetitions per condition
     const durs = [16, 50, 150, 300, 500]; // variations of stimulus display duration
     const buffs = [0, 2.5, 5]; // variations of buffer time
@@ -85,8 +85,7 @@ function stim_gen() {
         ];
     } else {
         methods = [
-            'rPAF_1rAF', 'rAFpre', 'rAFpre_double',
-            'rAFpre_loop', 'rAF_single', 'rAF_double', 'rAF_loop', 'none'
+            'rAF_single', 'rAF_double', 'rAF_loop'
         ];
     }
     let types = {};
@@ -148,10 +147,10 @@ function stim_gen() {
     });
     // shuffle the list to get random order
     allstims = shuffle(allstims);
-}
+};
 
 // check if a specific image is loaded
-function loaded(img) {
+const loaded = function(img) {
     if (!img.complete) {
         return false;
     }
@@ -159,10 +158,10 @@ function loaded(img) {
         return false;
     }
     return true;
-}
+};
 
 // check if all images are loaded
-function checkLoad() {
+const checkLoad = function() {
     for (let ikey in DT.images) {
         if (!loaded(DT.images[ikey])) {
             alert('Failed image completion!');
@@ -173,9 +172,9 @@ function checkLoad() {
     console.log('All images complete');
     // indicate complication via changing rectangle border to blue
     document.getElementById('bg_id').style.border = "solid 3px blue";
-}
+};
 
-function next_trial() {
+const next_trial = function() {
     // prepare next trial
     trialnum++;
     js_times = {};
@@ -222,16 +221,16 @@ function next_trial() {
             listenkey = true;
         }, 100);
     }, 100);
-}
+};
 
 // use image display function
-function set_img_conds() {
+const set_img_conds = function() {
     disp_func = disp_image;
     DT.loopOn();
-}
+};
 
 // choose timing method (without images)
-function set_disp_conds() {
+const set_disp_conds = function() {
     // here, the given timing method is chosen based on the current method name
     // again, method names correspond to the ones described in https://osf.io/7h5tw/
     // the given method functions are assigned as disp_func, which is then executed
@@ -247,7 +246,7 @@ function set_disp_conds() {
         console.error('No display function found');
         store_trial();
     }
-}
+};
 
 //*** display functions ***//
 
@@ -300,7 +299,7 @@ const stopwatch = function() {
     }
 };
 
-function disp_rAF1_text() {
+const disp_rAF1_text = function() {
     console.log('disp_rAF1_text', neat_date());
     js_times.start_other = DT.now();
 
@@ -314,10 +313,10 @@ function disp_rAF1_text() {
         js_times.start_stamp = stamp; // the crucial (start) JS-timing
         stopwatch();
     });
-}
+};
 
 
-function disp_rAF2_text() {
+const disp_rAF2_text = function() {
     console.log('disp_rAF2_text', neat_date());
     requestAnimationFrame(function() {
         if (current_stim.type == 'text') {
@@ -332,12 +331,12 @@ function disp_rAF2_text() {
             stopwatch();
         });
     });
-}
+};
 
 
 // image display and timing method
 
-function disp_image() {
+const disp_image = function() {
     console.log('disp_image', neat_date());
     js_times.start_other = DT.now();
 
@@ -371,7 +370,7 @@ function disp_image() {
         }, current_stim.duration - current_stim.buff);
 
     });
-}
+};
 
 //*** storing data, etc. ***//
 
@@ -393,7 +392,7 @@ let full_data = [
     "js_end_other"
 ].join('\t') + '\n';
 
-function store_trial() {
+const store_trial = function() {
     let c_item;
     c_item = current_stim.item.replace('./images/', '');
     full_data += [
@@ -418,20 +417,20 @@ function store_trial() {
     } else {
         ending();
     }
-}
+};
 
 // change rectangle color to blue to indicate experiment ending
-function ending() {
+const ending = function() {
     console.log('THE END');
     full_data += JSON.stringify(misc);
     document.getElementById('dl_id').style.display = 'block';
     setTimeout(function() {
         document.getElementById('bg_id').style.backgroundColor = "blue";
     }, 5000);
-}
+};
 
 // function to download (save) results data as a text file
-function dl_as_file() {
+const dl_as_file = function() {
     let stud;
     if (use_images) {
         stud = 'image_';
@@ -450,20 +449,20 @@ function dl_as_file() {
     document.body.appendChild(elemx);
     elemx.click();
     document.body.removeChild(elemx);
-}
+};
 
 // get readable current date and time
-function neat_date() {
+const neat_date = function() {
     let m = new Date();
     return m.getFullYear() + "_" +
         ("0" + (m.getMonth() + 1)).slice(-2) + "" +
         ("0" + m.getDate()).slice(-2) + "_" +
         ("0" + m.getHours()).slice(-2) + "" +
         ("0" + m.getMinutes()).slice(-2);
-}
+};
 
 // order randomization function
-function shuffle(arr) {
+const shuffle = function(arr) {
     let array = JSON.parse(JSON.stringify(arr));
     let newarr = [];
     let currentIndex = array.length,
@@ -478,4 +477,4 @@ function shuffle(arr) {
         array[randomIndex] = temporaryValue;
     }
     return newarr;
-}
+};
