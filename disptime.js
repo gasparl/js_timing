@@ -45,7 +45,7 @@ const DT = {
         }
         this.loop = false;
     },
-    // initiate RTOloop ("setRTO" via RAF loop)
+    // initiate RTOloop ("setTimeout" via RAF loop)
     // actually defined below, because of self-reference
     setRTO: undefined,
     // RTOloop actually defined below, because of self-reference

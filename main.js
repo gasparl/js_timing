@@ -76,7 +76,7 @@ const begin = function(colr, imguse) {
 // where each dictionary contains the information of a single trial
 const stim_gen = function() {
     const times = 10; // how many repetitions per condition
-    const durs = [16, 50, 150, 300, 500]; // variations of stimulus display duration
+    const durs = [(50 / 3), 50, 150, 300, 500]; // variations of stimulus display duration
     const buffs = [0, 2.5, 5]; // variations of buffer time
     let methods;
     if (use_images === true) {
