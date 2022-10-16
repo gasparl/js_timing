@@ -1,142 +1,115 @@
 /*jshint esversion: 6 */
 
-// get the appropriate version of "requestAnimationFrame()"
-const requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
-
-const DT = {
-    // now: gets the appropriate version of "performance.now()"
-    // normally available in all modern browsers, but it can resort to the still precise Date()
-    // see https://developer.mozilla.org/en-US/docs/Web/API/Performance/now
-    now: function() {
-        let performance = window.performance || {};
-        performance.now = (function() {
-            return (
-                performance.now ||
-                performance.webkitNow ||
-                performance.msNow ||
-                performance.oNow ||
-                performance.mozNow ||
-                function() {
-                    return new Date().getTime();
-                }
-            );
-        })();
-        return performance.now();
-    },
-    // loop decides whether the RAF loop should continue, see below
-    loop: false,
-    // loopFunction actually defined below, because of self-reference
-    loopFunction: undefined,
-    // sets the RAF loop on by setting loop true and initiating the loop function
-    // (optionally prints warning info to console)
-    loopOn: function(warn = true) {
-        if (warn) {
-            console.warn('loopOn()');
-        }
-        this.loop = true;
-        this.loopFunction();
-    },
-    // sets the RAF loop off by setting loop false
-    // (optionally prints warning info to console)
-    loopOff: function(warn = true) {
-        if (warn) {
-            console.warn('loopOff()');
-        }
-        this.loop = false;
-    },
-    // initiate RTOloop ("setTimeout" via RAF loop)
-    // actually defined below, because of self-reference
-    setRTO: undefined,
-    // RTOloop actually defined below, because of self-reference
-    RTOloop: undefined,
-    // start time for setRTOLoop 
-    RTOstart: undefined,
-    // duration for setRTOLoop 
-    RTOduration: undefined,
-    // callback function for setRTOLoop 
-    RTOcallback: undefined,
-    // loaded images
-    images: {},
-    // preload images
-    preload: sources =>
-        Promise.all(
-            sources.map(
-                src => new Promise(function(resolve, reject) {
-                    const img = new Image();
-                    DT.images[src] = img;
-                    img.onload = function() {
-                        resolve(img);
-                    };
-                    img.onerror = reject;
-                    img.src = src;
-                }))),
-    // RAF timestamp samples
-    samples: [],
-    // refresh interval(s) based on RAF timestamp samples
-    interval: undefined,
-    // collect RAF timestamp samples, 10 by prevent
-    // (also calculates approx. refresh interval, based on median RAF stamp distance)
-    getSamples: function(fun = undefined, n = 10) {
-        requestAnimationFrame((stamp) => {
-            this.samples.push(stamp);
-            if (n > 1) {
-                this.getSamples(fun, --n);
-            } else {
-                const samps = this.samples.slice(0);
-                if (samps.length > 1 && this.interval === undefined) {
-                    samps.shift();
-                    this.interval = parseFloat(this.median(samps.slice(1).map((num, i) => {
-                        return num - samps[i];
-                    }))).toFixed(1);
-                }
-                if (typeof fun === 'function') {
-                    fun();
-                }
+const DT = (() => {
+    const isNum = val => !isNaN(val) && val < Infinity;
+    var tasks = [], loop = false;
+    const onFrame = (time) => {
+        tasks = tasks.filter(task => {
+            if (task.init instanceof Function) {
+                task.init();
+                task.init = time;
+                return (true);
             }
+            if (time - task.init > dur) {
+                cb(task.init, time); // return start and finish times
+                return (false);
+            }
+            return (true);
         });
-    },
-    // median calculation
-    median: function(values) {
-        if (values.length === 0) {
-            return undefined;
+        if (loop) requestAnimationFrame(onFrame);
+    }
+    return Object.freeze({
+        display(start, end, duration) {
+            if (loop && start instanceof Function && end instanceof Function && isNum(duration)) {
+                tasks.push({
+                    init: start,
+                    cb: end,
+                    dur: duration
+                })
+            } else {
+                if (!loop) console.warn('There is no ongoing RAF loop.');
+                if (!(start instanceof Function)) console.warn('The given "start" is not a function.');
+                if (!(end instanceof Function)) console.warn('The given "end" is not a function.');
+                if (!isNum(duration)) console.warn('The given "duration" is not numeric.');
+            }
+        },
+        loopOn(warn = true) {
+            if (!loop) {
+                loop = true;
+                onFrame();
+                if (warn) {
+                    console.warn('loopOn()');
+                }
+            } else {
+                console.warn('The loop is already ongoing.');
+            }
+        },
+        loopOff(warn = true) {
+            if (loop) {
+                loop = false;
+                if (warn) {
+                    console.warn('loopOff()');
+                }
+            } else; {
+                console.warn('There is no ongoing RAF loop.');
+            }
+        },
+        // loaded images
+        images: {},
+        // preload images
+        preload(sources) {
+            Promise.all(
+                sources.map(
+                    src => new Promise(function(resolve, reject) {
+                        const img = new Image();
+                        DT.images[src] = img;
+                        img.onload = function() {
+                            resolve(img);
+                        };
+                        img.onerror = reject;
+                        img.src = src;
+                    })))
+        },
+        // RAF timestamp samples
+        samples: [],
+        // refresh interval(s) based on RAF timestamp samples
+        interval: undefined,
+        // collect RAF timestamp samples, 10 by prevent
+        // (also calculates approx. refresh interval, based on median RAF stamp distance)
+        getSamples(fun = undefined, n = 10) {
+            requestAnimationFrame((stamp) => {
+                this.samples.push(stamp);
+                if (n > 1) {
+                    this.getSamples(fun, --n);
+                } else {
+                    const samps = this.samples.slice(0);
+                    if (samps.length > 1 && this.interval === undefined) {
+                        samps.shift();
+                        this.interval = parseFloat(this.median(samps.slice(1).map((num, i) => {
+                            return num - samps[i];
+                        }))).toFixed(1);
+                    }
+                    if (typeof fun === 'function') {
+                        fun();
+                    }
+                }
+            });
+        },
+        // median calculation
+        median(values) {
+            if (values.length === 0) {
+                return undefined;
+            }
+            values.sort(function(a, b) {
+                return a - b;
+            });
+            const half = Math.floor(values.length / 2);
+            if (values.length % 2) {
+                return values[half];
+            }
+            return (values[half - 1] + values[half]) / 2.0;
         }
-        values.sort(function(a, b) {
-            return a - b;
-        });
-        const half = Math.floor(values.length / 2);
-        if (values.length % 2) {
-            return values[half];
-        }
-        return (values[half - 1] + values[half]) / 2.0;
-    }
-};
+    });
+})();
 
-// add the RAF loop function definition
-DT.loopFunction = function() {
-    if (DT.loop) {
-        requestAnimationFrame(DT.loopFunction);
-    }
-};
 
-// add the RAF Time-Out (RTO) initiation function definition
-DT.setRTO = function(callback, duration, start = DT.now()) {
-    DT.RTOstart = start;
-    DT.RTOduration = duration;
-    DT.RTOcallback = callback;
-    DT.RTOloop(start);
-};
-
-// add the RAF setRTO function definition
-DT.RTOloop = function(timestamp) {
-    if (timestamp - DT.RTOstart < DT.RTOduration) {
-        requestAnimationFrame((RAFtimestamp) => DT.RTOloop(RAFtimestamp));
-    } else {
-        DT.RTOcallback(timestamp, DT.RTOstart);
-        DT.RTOcallback = undefined;
-        DT.RTOstart = undefined;
-        DT.RTOduration = undefined;
-    }
-};
-
-Object.seal(DT);

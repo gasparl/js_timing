@@ -81,7 +81,7 @@ const stim_gen = function() {
     let methods;
     if (use_images === true) {
         methods = [
-            'canvas', 'opacity', 'none'
+            'canvas', 'opacity', 'visibility', 'display'
         ];
     } else {
         methods = [
