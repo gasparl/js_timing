@@ -6,12 +6,12 @@ const DT = (() => {
     const onFrame = time => {
         tasks = tasks.filter(task => {
             if (task.init instanceof Function) {
-                task.init();
+                task.init(time);
                 task.init = time;
-                return true;
+                return task.dur === undefined ? false : true;
             }
-            if (time - task.init > dur) {
-                cb(task.init, time); // return start and finish times
+            if (time - task.init > task.dur) {
+                task.cb(task.init, time); // return start and finish times
                 return false;
             }
             return true;
@@ -20,7 +20,9 @@ const DT = (() => {
     };
     return Object.freeze({
         display(start, end, duration) {
-            if (loop && start instanceof Function && end instanceof Function && isNum(duration)) {
+            if (loop && start instanceof Function &&
+                ((end === undefined && duration == undefined) ||
+                    (end instanceof Function && isNum(duration)))) {
                 tasks.push({
                     init: start,
                     cb: end,
@@ -29,8 +31,10 @@ const DT = (() => {
             } else {
                 if (!loop) console.warn('There is no ongoing RAF loop.');
                 if (!(start instanceof Function)) console.warn('The given "start" is not a function.');
-                if (!(end instanceof Function)) console.warn('The given "end" is not a function.');
-                if (!isNum(duration)) console.warn('The given "duration" is not numeric.');
+                if (!(end === undefined && duration === undefined)) {
+                    if (!(end instanceof Function)) console.warn('The given "end" is not a function.');
+                    if (!isNum(duration)) console.warn('The given "duration" is not numeric.');
+                }
             }
         },
         loopOn(warn = true) {
@@ -50,7 +54,7 @@ const DT = (() => {
                 if (warn) {
                     console.warn('loopOff()');
                 }
-            } else; {
+            } else {
                 console.warn('There is no ongoing RAF loop.');
             }
         },
@@ -111,5 +115,4 @@ const DT = (() => {
         }
     });
 })();
-
 
