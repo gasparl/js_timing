@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", function() {
     document.body.addEventListener('keydown', function(e) {
         // input_time (for "q" keypress) is the JS-timed keypress in the manuscript
         // the main measure is the time between this and the stimulus display time (below)
-        input_time = DT.now();
+        input_time = performance.now();
 
         // on pressing "q", immediately display next stimulus
         // (pressing "x" is simply the indication of starting the experiment)
@@ -271,10 +271,10 @@ The main measurement is the time between the keypress JS timing and the display 
 
 
 const trial_end = function(end_stamp0) {
-    js_times.end_0_now = DT.now();
+    js_times.end_0_now = performance.now();
     js_times.end_0 = end_stamp0;
     requestAnimationFrame(function(end_stamp1) {
-        js_times.end_1_now = DT.now();
+        js_times.end_1_now = performance.now();
         js_times.end_1 = end_stamp1;
         if (current_stim.type == 'text') {
             document.getElementById('stimulus_id').textContent = '';
@@ -282,7 +282,7 @@ const trial_end = function(end_stamp0) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
         requestAnimationFrame(function(end_stamp2) {
-            js_times.end_2_now = DT.now();
+            js_times.end_2_now = performance.now();
             js_times.end_2 = end_stamp2;
             store_trial();
         });
@@ -301,7 +301,7 @@ const stopwatch = function() {
 
 const disp_rAF1_text = function() {
     console.log('disp_rAF1_text', neat_date());
-    js_times.start_other = DT.now();
+    js_times.start_other = performance.now();
 
     requestAnimationFrame(function(stamp) {
         if (current_stim.type == 'text') {
@@ -309,7 +309,7 @@ const disp_rAF1_text = function() {
         } else {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-        js_times.start_nextline = DT.now();
+        js_times.start_nextline = performance.now();
         js_times.start_stamp = stamp; // the crucial (start) JS-timing
         stopwatch();
     });
@@ -324,9 +324,9 @@ const disp_rAF2_text = function() {
         } else {
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
-        js_times.start_nextline = DT.now();
+        js_times.start_nextline = performance.now();
         requestAnimationFrame(function(stamp) {
-            js_times.start_other = DT.now();
+            js_times.start_other = performance.now();
             js_times.start_stamp = stamp;
             stopwatch();
         });
@@ -338,7 +338,7 @@ const disp_rAF2_text = function() {
 
 const disp_image = function() {
     console.log('disp_image', neat_date());
-    js_times.start_other = DT.now();
+    js_times.start_other = performance.now();
 
     requestAnimationFrame(function(stamp) {
         if (current_stim.method == 'canvas') {
@@ -348,11 +348,11 @@ const disp_image = function() {
         } else {
             DT.images[current_stim.item].style.opacity = 1;
         }
-        js_times.start_nextline = DT.now();
+        js_times.start_nextline = performance.now();
         js_times.start_stamp = stamp; // the crucial (start) JS-timing
 
         setTimeout(function() {
-            js_times.end_other = DT.now();
+            js_times.end_other = performance.now();
 
             requestAnimationFrame(function(stamp2) {
                 if (current_stim.method == 'canvas') {
@@ -362,7 +362,7 @@ const disp_image = function() {
                 } else {
                     DT.images[current_stim.item].style.opacity = 0;
                 }
-                js_times.end_nextline = DT.now();
+                js_times.end_nextline = performance.now();
                 js_times.end_stamp = stamp2; // the crucial (end) JS-timing
                 store_trial();
             });

@@ -3,21 +3,21 @@
 const DT = (() => {
     const isNum = val => !isNaN(val) && val < Infinity;
     var tasks = [], loop = false;
-    const onFrame = (time) => {
+    const onFrame = time => {
         tasks = tasks.filter(task => {
             if (task.init instanceof Function) {
                 task.init();
                 task.init = time;
-                return (true);
+                return true;
             }
             if (time - task.init > dur) {
                 cb(task.init, time); // return start and finish times
-                return (false);
+                return false;
             }
-            return (true);
+            return true;
         });
         if (loop) requestAnimationFrame(onFrame);
-    }
+    };
     return Object.freeze({
         display(start, end, duration) {
             if (loop && start instanceof Function && end instanceof Function && isNum(duration)) {
@@ -25,7 +25,7 @@ const DT = (() => {
                     init: start,
                     cb: end,
                     dur: duration
-                })
+                });
             } else {
                 if (!loop) console.warn('There is no ongoing RAF loop.');
                 if (!(start instanceof Function)) console.warn('The given "start" is not a function.');
@@ -41,7 +41,7 @@ const DT = (() => {
                     console.warn('loopOn()');
                 }
             } else {
-                console.warn('The loop is already ongoing.');
+                console.warn('The RAF loop is already ongoing.');
             }
         },
         loopOff(warn = true) {
@@ -68,7 +68,7 @@ const DT = (() => {
                         };
                         img.onerror = reject;
                         img.src = src;
-                    })))
+                    })));
         },
         // RAF timestamp samples
         samples: [],
